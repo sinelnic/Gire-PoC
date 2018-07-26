@@ -37,9 +37,10 @@
             <from id="_from1" uri="direct:obtenerToken?exchangePattern=InOut"/>
             <onException id="_onException1">
                 <exception>org.apache.camel.component.netty4.http.NettyHttpOperationFailedException</exception>
-    			<handled>
-      			  <constant>true</constant>
- 				</handled>
+                <exception>org.apache.camel.CamelExchangeException</exception>
+                <handled>
+                    <constant>true</constant>
+                </handled>
                 <setBody id="_setBody6">
                     <simple>{ 
        "Resultado":6, 
