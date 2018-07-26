@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<mappings xmlns="http://dozermapper.github.io/schema/bean-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://dozermapper.github.io/schema/bean-mapping https://dozermapper.github.io/schema/bean-mapping.xsd">
+    <configuration>
+        <wildcard>false</wildcard>
+    </configuration>
+    <mapping>
+        <class-a>apisample.ApiSample</class-a>
+        <class-b>apisample.ApiSample</class-b>
+        <field>
+            <a>valid</a>
+            <b>valid</b>
+        </field>
+        <field>
+            <a>codCia</a>
+            <b>codCia</b>
+        </field>
+        <field>
+            <a>usuario</a>
+            <b>usuario</b>
+        </field>
+        <field>
+            <a>origen</a>
+            <b>origen</b>
+        </field>
+        <field>
+            <a>empresa</a>
+            <b>empresa</b>
+        </field>
+        <field>
+            <a>referencia</a>
+            <b>referencia</b>
+        </field>
+    </mapping>
+    <mapping>
+        <class-a>org.apache.camel.component.dozer.ExpressionMapper</class-a>
+        <class-b>apisample.ApiSample</class-b>
+        <field custom-converter-id="_expressionMapping" custom-converter-param="simple:\${exchangeProperty.nroTarjeta_pgp}">
+            <a>expression</a>
+            <b>nroTarjeta</b>
+        </field>
+    </mapping>
+</mappings>

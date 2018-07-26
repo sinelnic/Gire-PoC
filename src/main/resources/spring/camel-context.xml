@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd        http://camel.apache.org/schema/spring       http://camel.apache.org/schema/spring/camel-spring.xsd">
+    <bean
+        class="org.springframework.boot.web.servlet.ServletRegistrationBean" id="camelServlet">
+        <property name="name" value="CamelServlet"/>
+        <property name="loadOnStartup" value="1"/>
+        <property name="servlet">
+            <bean
+                class="org.apache.camel.component.servlet.CamelHttpTransportServlet" id="camelServlet"/>
+        </property>
+        <property name="urlMappings" value="/*"/>
+    </bean>
+    <camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
+        <endpoint id="hash_to_comprobarPan" uri="dozer:hash_to_comprobarPan?sourceModel=apisample.ApiSample&amp;targetModel=comprobarpan.ComprobarPan&amp;marshalId=transform-json&amp;unmarshalId=apisampleApiSample&amp;mappingFile=hash_to_comprobarPan.xml"/>
+        <endpoint id="obtenerToken_to_properties" uri="dozer:obtenerToken_to_properties?sourceModel=apisample.ApiSample&amp;targetModel=apisample.ApiSample&amp;marshalId=transform-json&amp;unmarshalId=apisampleApiSample&amp;mappingFile=obtenerToken_to_properties.xml"/>
+        <endpoint id="obtenerToken_to_hash" uri="dozer:obtenerToken_to_hash?sourceModel=apisample.ApiSample&amp;targetModel=apisample.ApiSample&amp;marshalId=transform-json&amp;unmarshalId=apisampleApiSample&amp;mappingFile=obtenerToken_to_hash.xml"/>
+        <endpoint id="obtenerToken_to_pgp" uri="dozer:obtenerToken_to_pgp?sourceModel=apisample.ApiSample&amp;targetModel=pgpsample.PgpSample&amp;marshalId=transform-json&amp;unmarshalId=apisampleApiSample&amp;mappingFile=obtenerToken_to_pgp.xml"/>
+        <dataFormats>
+            <json id="apisampleApiSample" library="Jackson" unmarshalTypeName="apisample.ApiSample"/>
+            <json id="transform-json" library="Jackson"/>
+        </dataFormats>
+        <restConfiguration apiContextPath="api-docs" component="servlet"
+            enableCORS="true" host="localhost">
+            <dataFormatProperty key="prettyPrint" value="true"/>
+            <apiProperty key="api.title" value="obtenerToken"/>
+            <apiProperty key="api.version" value="1.0.0"/>
+            <apiProperty key="cors" value="true"/>
+        </restConfiguration>
+        <rest>
+            <post consumes="application/json"
+                produces="application/json" uri="/obtenerToken">
+                <to uri="direct:obtenerToken"/>
+            </post>
+        </rest>
+        <route id="obtenerToken" streamCache="true">
+            <from id="_from1" uri="direct:obtenerToken?exchangePattern=InOut"/>
+            <onException id="_onException1">
+                <exception>org.apache.camel.component.netty4.http.NettyHttpOperationFailedException</exception>
+    			<handled>
+      			  <constant>true</constant>
+ 				</handled>
+                <setBody id="_setBody6">
+                    <simple>{ 
+       "Resultado":6, 
+       "Descripcion":"error desconocido", 
+       "Data": { 
+              "NroOp": null, 
+              "Token": null 
+       } 
+}
+</simple>
+                </setBody>
+            </onException>
+            <setProperty id="_setProperty1" propertyName="obtenerToken_JSON">
+                <simple>${body}</simple>
+            </setProperty>
+            <to id="_to2" uri="ref:obtenerToken_to_pgp"/>
+            <to id="_to1" uri="netty4-http:http:172.18.9.79:8080/pgp-service/pgp?bridgeEndpoint=true"/>
+            <setProperty id="_setProperty8" propertyName="nroTarjeta_pgp">
+                <jsonpath>$.nroTarjeta</jsonpath>
+            </setProperty>
+            <setBody id="_setBody2">
+                <simple>${exchangeProperty.obtenerToken_JSON}</simple>
+            </setBody>
+            <to id="_to5" uri="ref:hash_to_comprobarPan"/>
+            <to id="_to6" uri="netty4-http:http:172.18.9.79:8080/hash-service/comprobarPan?bridgeEndpoint=true"/>
+            <choice id="_choice1">
+                <when id="_when1">
+                    <jsonpath>$.isValid</jsonpath>
+                    <setBody id="_setBody1">
+                        <simple>${exchangeProperty.obtenerToken_JSON}</simple>
+                    </setBody>
+                    <to id="_to3" uri="ref:obtenerToken_to_hash"/>
+                    <to id="_to4" uri="netty4-http:https:172.18.9.79:8080/hash-service/calcularHash?bridgeEndpoint=true"/>
+                    <setProperty id="_setProperty2" propertyName="response_data">
+                        <simple>${body}</simple>
+                    </setProperty>
+                    <setBody id="_setBody4">
+                        <simple>{
+  "body": "Proceso finalizado con éxito el ${date:now}",
+  "from": "ssinelni@redhat.com",
+  "isHtml": true,
+  "subject": "Proceso finalizado",
+  "to": "ssinelni@redhat.com"
+}
+</simple>
+                    </setBody>
+                    <to id="_to7" uri="netty4-http:http:172.18.9.79:8080/mail-service/send?bridgeEndpoint=true"/>
+                    <setBody id="_setBody5">
+                        <simple>{ 
+"Resultado":0, 
+"Descripcion":"OK", 
+"Data":${exchangeProperty.response_data} 
+} 
+</simple>
+                    </setBody>
+                </when>
+                <otherwise id="_otherwise1">
+                    <setBody id="_setBody3">
+                        <constant>{"Resultado":3,"Descripcion":"Tarjeta Invalida","Data":null}</constant>
+                    </setBody>
+                </otherwise>
+            </choice>
+        </route>
+    </camelContext>
+</beans>

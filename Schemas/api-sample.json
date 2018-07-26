@@ -1,0 +1,9 @@
+{
+  "codCia": "string",
+  "empresa": "string",
+  "usuario": "string",
+  "referencia": "string",
+  "nroTarjeta": "string",
+  "valid": "string",
+  "origen": "ITAU"
+}
